@@ -106,11 +106,11 @@ class EVD(nn.Module):
 class Encoder(nn.Module):
     def __init__(self):
         super(Encoder, self).__init__()
-        self.l1 = ConvBlock1(c_in=1, c_out=64, kernel_size=3, stride=1, padding=0, dilation=1)
-        self.l2 = ConvBlock2(64, 32, kernel_size=3, stride=2, padding=0, dilation=1)
+        self.l1 = ConvBlock1(c_in=1, c_out=32, kernel_size=3, stride=1, padding=0, dilation=1)
+        self.l2 = ConvBlock2(32, 32, kernel_size=3, stride=2, padding=0, dilation=1)
         self.l3 = ConvBlock1(32, 64, kernel_size=3, stride=1, padding=0, dilation=1)
-        self.l4 = ConvBlock2(64, 32, kernel_size=3, stride=2, padding=0, dilation=1)
-        self.l5 = ConvBlock1(32, 64, kernel_size=3, stride=1, padding=0, dilation=1)
+        self.l4 = ConvBlock2(64, 64, kernel_size=3, stride=2, padding=0, dilation=1)
+        self.l5 = ConvBlock1(64, 64, kernel_size=3, stride=1, padding=0, dilation=1)
         self.l6 = ConvBlock2(64, 32, kernel_size=3, stride=2, padding=0, dilation=1)
 
         self.flat = Flatten()  # Avi's function
@@ -131,16 +131,18 @@ class Encoder(nn.Module):
 
 
 class Decoder(nn.Module):
-    def __init__(self):
+    def __init__(self, image_size):
         super(Decoder, self).__init__()
-        self.l1 = DeConvBlock1(c_in=32, c_out=64, kernel_size=3, stride=1, padding=0, dilation=1)
-        self.l2 = DeConvBlock2(64, 32, kernel_size=4, stride=2, padding=1, dilation=1)
+        self.l1 = DeConvBlock1(c_in=32, c_out=32, kernel_size=3, stride=1, padding=0, dilation=1)
+        self.l2 = DeConvBlock2(32, 32, kernel_size=4, stride=2, padding=1, dilation=1)
         self.l3 = DeConvBlock1(32, 64, kernel_size=3, stride=1, padding=0, dilation=1)
-        self.l4 = DeConvBlock2(64, 32, kernel_size=4, stride=2, padding=1, dilation=1)
-        self.l5 = DeConvBlock1(32, 64, kernel_size=3, stride=1, padding=0, dilation=1)
+        self.l4 = DeConvBlock2(64, 64, kernel_size=4, stride=2, padding=1, dilation=1)
+        self.l5 = DeConvBlock1(64, 64, kernel_size=3, stride=1, padding=0, dilation=1)
         self.l6 = DeConvBlock2(64, 32, kernel_size=4, stride=2, padding=1, dilation=1)
+        # fl = Final Layer, returns x to be Image
+        self.fl = nn.Conv2d(32, 1, kernel_size=1, stride=1, padding=0, dilation=1)
 
-        self.unflat = unFlatten(8)  # Avi's function
+        self.unflat = unFlatten(image_size//8)  # Avi's function
 
     def forward(self, x):
         x = self.unflat(x)
@@ -151,35 +153,37 @@ class Decoder(nn.Module):
         x = self.l5(x)
         x = self.l6(x)
 
+        x = self.fl(x)
+
         # x = self.fc1(self.flat(x))
         return x
 
 
 class AutoEncoder(nn.Module):
-    def __init__(self):
+    def __init__(self, image_size):
         super(AutoEncoder, self).__init__()
         self.encoder = Encoder()
         self.rotation = EVD()
-        self.decoder = Decoder()
+        self.decoder = Decoder(image_size)
 
     def forward(self, x):
         x = self.encoder(x)
-        print(x)
+        # print(x)
         x = self.rotation(x)
-        print(x)
+        # print(x)
         x = self.decoder(x)
         return x
 
 
 if __name__ == "__main__":
     x = torch.randn(2, 1, 64, 64)
-    E = Encoder()
-    y = E(x)
-    print(y.shape)
+    # E = Encoder()
+    # y = E(x)
+    # print(y.shape)
+    #
+    # D = Decoder()
+    # z = D(y)
+    # print(z.shape)
 
-    D = Decoder()
-    z = D(y)
-    print(z.shape)
-
-    A = AutoEncoder()
+    A = AutoEncoder(64)
     print(A(x).shape)
