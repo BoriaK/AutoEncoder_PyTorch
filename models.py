@@ -3,6 +3,7 @@ import torch.nn as nn
 import torchvision
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torch.nn.functional as F
+import numpy as np
 
 
 class Flatten(nn.Module):
@@ -17,12 +18,12 @@ class Flatten(nn.Module):
 
 # N_dims = sqrt[(H/8)x(W/8)]
 class unFlatten(nn.Module):
-    def __init__(self, N_dims):
+    def __init__(self, n_dims):
         super(unFlatten, self).__init__()
-        self.N_dims = N_dims
+        self.n_dims = n_dims
 
     def forward(self, x):
-        x = x.view(x.shape[0], x.shape[1], self.N_dims, self.N_dims)
+        x = x.view(x.shape[0], x.shape[1], self.n_dims, self.n_dims)
 
         return x
 
@@ -88,6 +89,7 @@ class DeConvBlock2(nn.Module):
         return self.conv_block(x)
 
 
+# EVD = Eigen Value Decomposition
 class EVD(nn.Module):
     def __init__(self):
         super().__init__()
@@ -95,10 +97,54 @@ class EVD(nn.Module):
     def forward(self, y):
         # y = x.view(x.shape[0], x.shape[1], -1)
         S = torch.bmm(y, y.transpose(2, 1)) / y.shape[-1]
-        d, U = torch.linalg.eig(S)
+        D, U = torch.linalg.eig(S)
         U = U.real
-        yrot = torch.matmul(U, y)
-        return yrot
+        y_rot = torch.matmul(U, y)
+        return y_rot, U
+
+
+class InverseEVD(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, U, y_wave):
+        y_est = torch.matmul(U.transpose(2, 1), y_wave)
+        return y_est
+
+
+# add Uniform noise for training only:
+class addUniformNoise(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, y_rot):
+        mu = 1 / (2 ** 10)
+        Noise = (2 * torch.rand_like(y_rot) - 1) * mu
+        y_tag = y_rot + Noise
+        return y_tag
+
+
+# Quantization for testing the algorithm
+class QuantizationBlock(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, y_rot):
+        # B = the number of bits for the desired precision
+        B = 12
+        # need to add ROUND function, but wo using un-diferentiable functions inside
+        y_tag = torch.round((2 ** (B - 1)) * y_rot)
+        return y_tag, B
+
+
+class deQuantizationBlock(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, B, y_tag):
+        # B = the number of bits for the desired precision
+        y_wave = y_tag / (2 ** (B - 1))
+        return y_wave
 
 
 # c1 = num of input channels
@@ -142,7 +188,7 @@ class Decoder(nn.Module):
         # fl = Final Layer, returns x to be Image
         self.fl = nn.Conv2d(32, 1, kernel_size=1, stride=1, padding=0, dilation=1)
 
-        self.unflat = unFlatten(image_size//8)  # Avi's function
+        self.unflat = unFlatten(image_size // 8)  # Avi's function
 
     def forward(self, x):
         x = self.unflat(x)
@@ -164,15 +210,22 @@ class AutoEncoder(nn.Module):
         super(AutoEncoder, self).__init__()
         self.encoder = Encoder()
         self.rotation = EVD()
+        self.quantization = addUniformNoise()
+        self.inverserotation = InverseEVD()
         self.decoder = Decoder(image_size)
 
     def forward(self, x):
-        x = self.encoder(x)
-        # print(x)
-        x = self.rotation(x)
-        # print(x)
-        x = self.decoder(x)
-        return x
+        y = self.encoder(x)
+        print(y)
+        y_rot, U = self.rotation(y)
+        # print(y_rot)
+        y_tag = self.quantization(y_rot)
+        # print(y_tag)
+        y_est = self.inverserotation(U, y_tag)
+        # print(y_est)
+        x_est = self.decoder(y_est)
+        print(x_est)
+        return y, x_est
 
 
 if __name__ == "__main__":
@@ -186,4 +239,5 @@ if __name__ == "__main__":
     # print(z.shape)
 
     A = AutoEncoder(64)
-    print(A(x).shape)
+    f = A(x)
+    print(f[0].shape, f[1].shape)

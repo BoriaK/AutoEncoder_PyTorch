@@ -21,7 +21,9 @@ class DataSet1(Dataset):
 
     def __getitem__(self, index):
         f = self.fnames[index]
-        img = self.transform(Image.open(f))
+        img = self.transform(Image.open(f).convert('YCbCr'))
+        # debug_img = transforms.functional.to_pil_image(img[0, :, :])
+        # debug_img.show()
         return img[0, :, :].unsqueeze(0)
 
     def __len__(self):

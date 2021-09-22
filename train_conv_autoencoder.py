@@ -34,7 +34,6 @@ if not os.path.isdir(args.root_chkps):
 
 
 def trainAutoEncoder():
-
     transforms_train = transforms.Compose([
         transforms.RandomCrop((args.Image_size, args.Image_size)),
         # transforms.Resize((args.Image_size, args.Image_size)),
@@ -80,6 +79,7 @@ def trainAutoEncoder():
         start_epoch = 0
 
     '''train loop'''
+    lmb = 1  # lambda is a hyper parameter for Rate Distortion loss function
     for epoch in range(start_epoch, args.n_epochs):
         model.train()
         loss_av = 0.
@@ -90,7 +90,12 @@ def trainAutoEncoder():
             # regularization_loss = 0
             # for param in model.parameters():
             #    regularization_loss += torch.sum(torch.abs(param))
-            loss = criterion(output, data)  # + 0.0001*regularization_loss
+            # loss = criterion(output, data)  + 0.0001*regularization_loss
+            # RD Loss Function = MSE + lambda*||y||^2
+            loss = criterion(output[1], data) + lmb * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1))
+            # for debug
+            print(str(criterion(output[1], data)))
+            print(str(torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1))))
 
             loss.backward()
             optimizer.step()
@@ -107,14 +112,12 @@ def trainAutoEncoder():
             for i, data in enumerate(data_loader_test):
                 data = data.to(args.device).type(args.dtype_float)
                 output = model(data)
-                loss = criterion(output, data)
+                loss = criterion(output[1], data) + lmb * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1))
                 loss_av_test += loss.item()
                 # torchvision.utils.make_grid(output)
                 # for debug
-                debug_output = torchvision.transforms.functional.to_pil_image(output.squeeze(0))
-                debug_output.save(r'./debug_output/'+str(i)+'.bmp')
-
-
+                debug_output = torchvision.transforms.functional.to_pil_image(output[1].squeeze(0))
+                debug_output.save(r'./debug_output/' + str(i) + '.bmp')
 
         loss_av_test /= len(dataset_valid)
 
@@ -125,13 +128,13 @@ def trainAutoEncoder():
                      optimizer.param_groups[0]["lr"],
                      loss_av,
                      loss_av_test))
-        if epoch % 2 == 0:
-            checkpoint = {'epoch': epoch,
-                          'model_state': model.state_dict(),
-                          'optimizer_state': optimizer.state_dict(),
-                          }
-            torch.save(checkpoint, './checkpoints/c_' +
-                       str(epoch) + '.pth')
+        # if epoch % 2 == 0:
+        #     checkpoint = {'epoch': epoch,
+        #                   'model_state': model.state_dict(),
+        #                   'optimizer_state': optimizer.state_dict(),
+        #                   }
+        #     torch.save(checkpoint, './checkpoints/c_' +
+        #                str(epoch) + '.pth')
 
 
 if __name__ == "__main__":
