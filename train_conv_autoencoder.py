@@ -151,19 +151,18 @@ def trainAutoEncoder():
         Loss_Arr[0][epoch] = loss_av_train
         Loss_Arr[1][epoch] = loss_av_test
 
-
-# for plot purposes:
-if args.resume_epoch is None:
-    start_epoch = 0
-else:
-    start_epoch = args.resume_epoch
-plt.figure()
-plt.plot(Loss_Arr[0], range(start_epoch, args.n_epochs), Loss_Arr[1], range(start_epoch, args.n_epochs))
-plt.title("Trainig and Inference Loss over Epochs")
-plt.xlabel("EPOCHS")
-plt.ylabel("Loss")
-plt.legend(['Training Loss', 'Inference Loss'])
-plt.savefig(r'./debug_output/Training_and_Inference_Loss')
+    # for plot purposes:
+    if args.resume_epoch is None:
+        start_epoch = 0
+    else:
+        start_epoch = args.resume_epoch
+    plt.figure()
+    plt.plot(Loss_Arr[0], range(start_epoch, args.n_epochs), Loss_Arr[1], range(start_epoch, args.n_epochs))
+    plt.title("Trainig and Inference Loss over Epochs")
+    plt.xlabel("EPOCHS")
+    plt.ylabel("Loss")
+    plt.legend(['Training Loss', 'Inference Loss'])
+    plt.savefig(r'./debug_output/Training_and_Inference_Loss')
 
 if __name__ == "__main__":
     trainAutoEncoder()
