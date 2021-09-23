@@ -109,6 +109,9 @@ class InverseEVD(nn.Module):
 
     def forward(self, U, y_wave):
         y_est = torch.matmul(U.transpose(2, 1), y_wave)
+        ################## FOR DEBUG####################
+        # B = torch.matmul(U.transpose(2, 1), U)
+        # print(B)
         return y_est
 
 
@@ -158,6 +161,8 @@ class Encoder(nn.Module):
         self.l4 = ConvBlock2(64, 64, kernel_size=3, stride=2, padding=0, dilation=1)
         self.l5 = ConvBlock1(64, 64, kernel_size=3, stride=1, padding=0, dilation=1)
         self.l6 = ConvBlock2(64, 32, kernel_size=3, stride=2, padding=0, dilation=1)
+        ################## FOR DEBUG####################
+        # self.l6 = ConvBlock2(64, 2, kernel_size=3, stride=2, padding=0, dilation=1)
 
         self.flat = Flatten()  # Avi's function
         # self.fc1 = nn.Linear(32, latent_dim)  # Not sure it's necessary
@@ -216,20 +221,21 @@ class AutoEncoder(nn.Module):
 
     def forward(self, x):
         y = self.encoder(x)
-        print(y)
-        y_rot, U = self.rotation(y)
+        # print(y)
+        # y_rot, U = self.rotation(y)
         # print(y_rot)
-        y_tag = self.quantization(y_rot)
+        # y_tag = self.quantization(y_rot)
         # print(y_tag)
-        y_est = self.inverserotation(U, y_tag)
+        # y_est = self.inverserotation(U, y_tag)
         # print(y_est)
-        x_est = self.decoder(y_est)
-        print(x_est)
+        # x_est = self.decoder(y_est)
+        x_est = self.decoder(y)
+        # print(x_est)
         return y, x_est
 
 
 if __name__ == "__main__":
-    x = torch.randn(2, 1, 64, 64)
+    x = torch.randn(2, 1, 8, 8)
     # E = Encoder()
     # y = E(x)
     # print(y.shape)
@@ -238,6 +244,6 @@ if __name__ == "__main__":
     # z = D(y)
     # print(z.shape)
 
-    A = AutoEncoder(64)
+    A = AutoEncoder(8)
     f = A(x)
     print(f[0].shape, f[1].shape)
