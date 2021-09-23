@@ -222,7 +222,7 @@ class AutoEncoder(nn.Module):
     def forward(self, x):
         y = self.encoder(x)
         # print(y)
-        # y_rot, U = self.rotation(y)
+        # y_rot = self.rotation(y)
         # print(y_rot)
         # y_tag = self.quantization(y_rot)
         # print(y_tag)
@@ -232,6 +232,36 @@ class AutoEncoder(nn.Module):
         x_est = self.decoder(y)
         # print(x_est)
         return y, x_est
+
+
+# class AutoEncoderTest(nn.Module):
+#     def __init__(self, image_size):
+#         super(AutoEncoder, self).__init__()
+#         self.encoder = Encoder()
+#         self.rotation = EVD()
+#         self.quantization = QuantizationBlock()
+#         # self.entropycoding = EntropyCoder()
+#         # self.entropydecoding = EntropyDeCoder()
+#         self.dequantization = deQuantizationBlock()
+#         self.inverserotation = InverseEVD()
+#         self.decoder = Decoder(image_size)
+#
+#     def forward(self, x):
+#         y = self.encoder(x)
+#         # print(y)
+#         y_rot, U = self.rotation(y)
+#         # print(y_rot)
+#         y_tag_in = self.quantization(y_rot)
+#         # print(y_tag)
+#         # y_code = entropycoding(y_tag_in)
+#         # y_tag_out = entropydecoding(y_code)  # maybe just take y_tag_in
+#         y_wave = self.dequantization(y_tag_out)  # maybe just take y_tag_in
+#         y_est = self.inverserotation(U, y_wave)  # maybe just take y_tag_in
+#         # print(y_est)
+#         # x_est = self.decoder(y_est)
+#         x_est = self.decoder(y)
+#         # print(x_est)
+#         return y_code, x_est
 
 
 if __name__ == "__main__":

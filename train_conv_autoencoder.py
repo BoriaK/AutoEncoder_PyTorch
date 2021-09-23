@@ -26,7 +26,7 @@ parser.add_argument('--Image_size', type=int, default=128, help='size of the inp
 parser.add_argument('--data', type=str, default=r'./dataSet/DataSet1', help='root directory of the dataset')
 parser.add_argument('--lmbd', type=float, default=1, help='Lambda value for Loss Function')
 parser.add_argument('--cuda', action='store_true', help='use GPU computation')
-parser.add_argument('--root-chkps', type=str, default='./checkpoints', help='use GPU computation')
+parser.add_argument('--root-chkps', type=str, default='./checkpoints', help='checkpoints directory')
 args = parser.parse_args()
 args.device = "cuda:0" if torch.cuda.is_available() and args.cuda else "cpu"
 args.dtype_float = torch.cuda.FloatTensor if torch.cuda.is_available() and args.cuda else torch.FloatTensor

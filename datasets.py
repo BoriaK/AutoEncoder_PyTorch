@@ -16,6 +16,8 @@ class DataSet1(Dataset):
             self.fnames = self.fnames[:-10]
         elif mode == 'Validation':
             self.fnames = self.fnames[-10:]
+        elif mode == 'Testing':
+            self.fnames = self.fnames
 
         # print()
 
