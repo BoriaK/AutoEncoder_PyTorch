@@ -124,7 +124,7 @@ class addUniformNoise(nn.Module):
         mu = 1 / (2 ** 10)
         Noise = (2 * torch.rand_like(y_rot) - 1) * mu
         y_tag = y_rot + Noise
-        return y_tag
+        return y_tag #y_rot.add_(Noise)
 
 
 # Quantization for testing the algorithm
@@ -192,7 +192,7 @@ class Decoder(nn.Module):
         self.l6 = DeConvBlock2(64, 32, kernel_size=4, stride=2, padding=1, dilation=1)
         # fl = Final Layer, returns x to be Image
         self.fl = nn.Sequential(
-            nn.Conv2d(32, 1, kernel_size=1, stride=1, padding=0, dilation=1),
+            nn.Conv2d(32, 1, kernel_size=1, stride=1, padding=0, dilation=1),        
             nn.ReLU(inplace=True),
         )
 
@@ -225,15 +225,14 @@ class AutoEncoder(nn.Module):
     def forward(self, x):
         y = self.encoder(x)
         # print(y)
-        y_rot, U = self.rotation(y)
+        # y_rot = self.rotation(y)
         # print(y_rot)
-        y_tag = self.quantization(y_rot)
+        # y_tag = self.quantization(y_rot)
         # print(y_tag)
-        y_est = self.inverserotation(U, y_tag)
-        # y_est = self.inverserotation(U, y_rot)
+        # y_est = self.inverserotation(U, y_tag)
         # print(y_est)
-        x_est = self.decoder(y_est)
-        # x_est = self.decoder(y)
+        # x_est = self.decoder(y_est)
+        x_est = self.decoder(y)
         # print(x_est)
         return y, x_est
 
@@ -267,13 +266,9 @@ class AutoEncoder(nn.Module):
 #         # print(x_est)
 #         return y_code, x_est
 
-# for input tensor: [0] dim - Batch size, [1] dim - data channels, =3 for RGB image, =1 for grayscale, [2] and [3]
-# dims - x and y pixels
-
-# for output tensor:
 
 if __name__ == "__main__":
-    x = torch.randn(2, 1, 64, 64)
+    x = torch.randn(2, 1, 128, 128)
     # E = Encoder()
     # y = E(x)
     # print(y.shape)
@@ -282,6 +277,6 @@ if __name__ == "__main__":
     # z = D(y)
     # print(z.shape)
 
-    A = AutoEncoder(64)
-    f = A(x)
-    print(f[0].shape, f[1].shape)
+    A = AutoEncoder(128)
+    f1, f2 = A(x)
+    print(f1.shape, f2.shape)

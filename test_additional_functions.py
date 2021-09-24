@@ -4,8 +4,6 @@ import torchvision.transforms as transforms
 import glob
 from add_Functions import PSNR
 
-
-
 FileFolder = r'./debug_output'
 
 img_in = Image.open(r'./debug_output/orig_0.bmp')
@@ -19,7 +17,3 @@ f_out = transforms.ToTensor()(img_out).unsqueeze_(0)
 psnr = PSNR(f_in, f_out)
 
 print(psnr.item())
-
-
-
-
