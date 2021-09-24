@@ -1,5 +1,5 @@
 import torch
-import torchac
+# import torchac
 
 datasetFolder = r'../dataSet/DataSet1'
 
@@ -14,9 +14,11 @@ def PSNR(original, compressed):
     return psnr
 
 
-x = torch.randn(2, 1, 8, 8)
+x = torch.randn(1, 64)
+B = 12
+y = torch.round((2 ** (B - 1)) * x)
 # Encode to bytestream.
-# output_cdf = ...  # Get CDF from your model, shape B, C, H, W, Lp
+output_cdf = ...  # Get CDF from your model, shape B, C, H, W, Lp
 # sym = ...  # Get the symbols to encode, shape B, C, H, W.
 # byte_stream = torchac.encode_float_cdf(output_cdf, sym, check_input_bounds=True)
 

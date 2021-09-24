@@ -270,7 +270,7 @@ class AutoEncoder(nn.Module):
 # for input tensor: [0] dim - Batch size, [1] dim - data channels, =3 for RGB image, =1 for grayscale, [2] and [3]
 # dims - x and y pixels
 
-# for output tensor:
+# for output tensor: [0] dim - Batch size, [1] dim - Latent Space, [2] dim - data pixels HxW
 
 if __name__ == "__main__":
     x = torch.randn(2, 1, 64, 64)
