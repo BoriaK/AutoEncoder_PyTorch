@@ -1,5 +1,8 @@
 import torch
+from PIL import Image
+import io
 # import torchac
+import torchvision.transforms as transforms
 
 datasetFolder = r'../dataSet/DataSet1'
 
@@ -14,13 +17,12 @@ def PSNR(original, compressed):
     return psnr
 
 
-x = torch.randn(1, 64)
-B = 12
-y = torch.round((2 ** (B - 1)) * x)
-# Encode to bytestream.
-output_cdf = ...  # Get CDF from your model, shape B, C, H, W, Lp
-# sym = ...  # Get the symbols to encode, shape B, C, H, W.
-# byte_stream = torchac.encode_float_cdf(output_cdf, sym, check_input_bounds=True)
-
-# Number of bits taken by the stream
-# real_bits = len(byte_stream) * 8
+def JPEGcompression(img_ten, ce):
+    # takes a Tensor, and returnes a JPEG converted PIL Image, converted to tensor
+    # ce = range(0, 10)   #bits per pixel
+    image = transforms.functional.to_pil_image(img_ten)
+    outputIoStream = io.BytesIO()
+    image.save(outputIoStream, "JPEG", quality=ce, optimice=True)
+    outputIoStream.seek(0)
+    img_ten_jpeg = transforms.ToTensor()(Image.open(outputIoStream)).unsqueeze_(0)
+    return img_ten_jpeg

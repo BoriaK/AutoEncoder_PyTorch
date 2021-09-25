@@ -150,6 +150,25 @@ class deQuantizationBlock(nn.Module):
         return y_wave
 
 
+########################## for future work, design Arithmetic coder##############################
+class EntropyCoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, y_tag):
+        y_code = y_tag
+        return y_code
+
+
+class EntropyDeCoder(nn.Module):
+    def __init__(self):
+        super().__init__()
+
+    def forward(self, y_code):
+        y_tag = y_code
+        return y_tag
+#########################################################################################
+
 # c1 = num of input channels
 # ci = num of filters/features in the output of the previous layer
 class Encoder(nn.Module):
@@ -238,34 +257,37 @@ class AutoEncoder(nn.Module):
         return y, x_est
 
 
-# class AutoEncoderTest(nn.Module):
-#     def __init__(self, image_size):
-#         super(AutoEncoder, self).__init__()
-#         self.encoder = Encoder()
-#         self.rotation = EVD()
-#         self.quantization = QuantizationBlock()
-#         # self.entropycoding = EntropyCoder()
-#         # self.entropydecoding = EntropyDeCoder()
-#         self.dequantization = deQuantizationBlock()
-#         self.inverserotation = InverseEVD()
-#         self.decoder = Decoder(image_size)
-#
-#     def forward(self, x):
-#         y = self.encoder(x)
-#         # print(y)
-#         y_rot, U = self.rotation(y)
-#         # print(y_rot)
-#         y_tag_in = self.quantization(y_rot)
-#         # print(y_tag)
-#         # y_code = entropycoding(y_tag_in)
-#         # y_tag_out = entropydecoding(y_code)  # maybe just take y_tag_in
-#         y_wave = self.dequantization(y_tag_out)  # maybe just take y_tag_in
-#         y_est = self.inverserotation(U, y_wave)  # maybe just take y_tag_in
-#         # print(y_est)
-#         # x_est = self.decoder(y_est)
-#         x_est = self.decoder(y)
-#         # print(x_est)
-#         return y_code, x_est
+class AutoEncoderTest(nn.Module):
+    def __init__(self, image_size):
+        super(AutoEncoderTest, self).__init__()
+        self.encoder = Encoder()
+        self.rotation = EVD()
+        self.quantization = QuantizationBlock()
+        self.entropycoding = EntropyCoder()
+        self.entropydecoding = EntropyDeCoder()
+        self.dequantization = deQuantizationBlock()
+        self.inverserotation = InverseEVD()
+        self.decoder = Decoder(image_size)
+
+    def forward(self, x):
+        y = self.encoder(x)
+        # print(y.shape)
+        y_rot, U = self.rotation(y)
+        # print(y_rot.shape)
+        y_tag_in, B = self.quantization(y_rot)
+        # print(y_tag_in.shape)
+        # y_code = entropycoding(y_tag_in)
+        # y_tag_out = entropydecoding(y_code)  # maybe just take y_tag_in
+        y_tag_out = y_tag_in
+        y_wave = self.dequantization(B, y_tag_out)  # maybe just take y_tag_in
+        # print(y_wave.shape)
+        y_est = self.inverserotation(U, y_wave)  # maybe just take y_tag_in
+        # print(y_est.shape)
+        x_est = self.decoder(y_est)
+        # x_est = self.decoder(y)
+        # print(x_est.shape)
+        return y_tag_out, x_est
+
 
 # for input tensor: [0] dim - Batch size, [1] dim - data channels, =3 for RGB image, =1 for grayscale, [2] and [3]
 # dims - x and y pixels
@@ -282,6 +304,8 @@ if __name__ == "__main__":
     # z = D(y)
     # print(z.shape)
 
-    A = AutoEncoder(64)
-    f = A(x)
-    print(f[0].shape, f[1].shape)
+    # A = AutoEncoder(64)
+    # f = A(x)
+    B = AutoEncoderTest(64)
+    ff = B(x)
+    print(ff[0].shape, ff[1].shape)

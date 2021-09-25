@@ -20,9 +20,13 @@ import glob
 
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--resume_epoch', type=int, default=None, help='starting epoch')
+parser.add_argument('--resume_epoch', type=int, default=None, help='resume epoch value')
+parser.add_argument('--load_training_phase', type=str, default='c_', help='c_ - regular, c1_ - w. PCA Rotation, c2_ - '
+                                                                          'w. quantization noise, c_3_ - w. RD Loss')
+parser.add_argument('--save_training_phase', type=str, default=None, help='c_ - regular, c1_ - w. PCA Rotation, c2_ - '
+                                                                          'w. quantization noise, c_3_ - w. RD Loss')
 parser.add_argument('--n_epochs', type=int, default=20, help='number of epochs of training')
-parser.add_argument('--batch_size', type=int, default=256, help='size of the batches')
+parser.add_argument('--batch_size', type=int, default=128, help='size of the batches')
 parser.add_argument('--Image_size', type=int, default=128, help='size of the input images')
 parser.add_argument('--data', type=str, default=r'./dataSet/DataSet1', help='root directory of the dataset')
 parser.add_argument('--lmbd', type=float, default=1, help='Lambda value for Loss Function')
@@ -77,7 +81,7 @@ def trainAutoEncoder():
 
     # construct an optimizer
     optimizer = torch.optim.Adam(
-        model.parameters(), lr=1e-3)
+        model.parameters(), lr=1e-5)
 
     # and a learning rate scheduler - Optional
     # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,
@@ -89,14 +93,19 @@ def trainAutoEncoder():
 
     # args.resume_epoch = 2
 
+    if args.save_training_phase is None:
+        save_training_phase = args.load_training_phase
+    else:
+        save_training_phase = args.save_training_phase
+
     if args.resume_epoch is not None:
         checkpoint = torch.load(
-            './checkpoints/c2_' + str(args.resume_epoch) + '.pth')
+            './checkpoints/' + args.load_training_phase + str(args.resume_epoch) + '.pth')
         model.load_state_dict(checkpoint['model_state'])
         optimizer.load_state_dict(checkpoint['optimizer_state'])
         # lr_scheduler.state_dict(checkpoint['lr_scheduler_state'])
         start_epoch = args.resume_epoch
-        print("Checkpoint Epoch " + str(args.resume_epoch) + " is LOADED")
+        print("Checkpoint " + args.load_training_phase + str(args.resume_epoch) + " is LOADED")
     else:
         start_epoch = 0
 
@@ -114,11 +123,11 @@ def trainAutoEncoder():
             #    regularization_loss += torch.sum(torch.abs(param))
             # loss = criterion(output, data)  + 0.0001*regularization_loss
             # RD Loss Function = MSE + lambda*||y||^2
-            # loss = criterion(output[1], data) + lmbd * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1))
-            loss = criterion(output[1], data)
+            loss = criterion(output[1], data) + lmbd * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1))
+            # loss = criterion(output[1], data)
             # for debug
             print(str(criterion(output[1], data).item()))
-            # print(str(lmbd * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1)).item()))
+            print(str(lmbd * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1)).item()))
 
             loss.backward()
             optimizer.step()
@@ -135,8 +144,8 @@ def trainAutoEncoder():
             for i, data in enumerate(data_loader_test):
                 data = data.to(args.device)  # .type(args.dtype_float)
                 output = model(data)
-                # loss = criterion(output[1], data) + lmbd * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1))
-                loss = criterion(output[1], data)
+                loss = criterion(output[1], data) + lmbd * torch.linalg.norm(output[0], ord=2, dim=1).mean(dim=(0, 1))
+                # loss = criterion(output[1], data)
                 loss_av_test += loss.item()
                 # torchvision.utils.make_grid(output)
                 # for debug
@@ -160,7 +169,15 @@ def trainAutoEncoder():
         #     torch.save(checkpoint, './checkpoints/c_' +
         #                str(epoch) + '.pth')
 
-        if (epoch - start_epoch) == 0:
+        if epoch == 0:
+            best_loss = loss_av_test
+            checkpoint = {'epoch': epoch,
+                          'model_state': model.state_dict(),
+                          'optimizer_state': optimizer.state_dict(),
+                          }
+            torch.save(checkpoint, './checkpoints/' + save_training_phase + str(epoch) + '.pth')
+            print("Checkpoint " + save_training_phase + str(epoch) + " is SAVED")
+        elif (epoch - start_epoch) == 0:
             best_loss = loss_av_test
         else:
             if loss_av_test < best_loss:
@@ -172,7 +189,8 @@ def trainAutoEncoder():
                               'model_state': model.state_dict(),
                               'optimizer_state': optimizer.state_dict(),
                               }
-                torch.save(checkpoint, './checkpoints/c2_' + str(epoch) + '.pth')
+                torch.save(checkpoint, './checkpoints/' + save_training_phase + str(epoch) + '.pth')
+                print("Checkpoint " + save_training_phase + str(epoch) + " is SAVED")
                 # torch.save(checkpoint, './checkpoints/BEST.pth')
 
         Loss_Arr[0][epoch - start_epoch] = loss_av_train
@@ -180,7 +198,8 @@ def trainAutoEncoder():
 
     # for plot purposes:
     plt.figure()
-    plt.plot(range(start_epoch, start_epoch + args.n_epochs), Loss_Arr[0], range(start_epoch, start_epoch + args.n_epochs),
+    plt.plot(range(start_epoch, start_epoch + args.n_epochs), Loss_Arr[0],
+             range(start_epoch, start_epoch + args.n_epochs),
              Loss_Arr[1])
     plt.title("Trainig and Inference Loss over Epochs")
     plt.xlabel("EPOCHS")
