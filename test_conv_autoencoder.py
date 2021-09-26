@@ -46,10 +46,10 @@ data_loader_test = torch.utils.data.DataLoader(
     dataset_test, batch_size=1, shuffle=False, num_workers=0)
 
 psnr_Arr = np.zeros((3, len(dataset_test)))
-Orig_Image_Arr = None
-CAE_Image_Arr = None
-JPEG_Image_Arr = None
-JPEG2K_Image_Arr = None
+Orig_Image_Arr = torch.empty(0)
+CAE_Image_Arr = torch.empty(0)
+JPEG_Image_Arr = torch.empty(0)
+JPEG2K_Image_Arr = torch.empty(0)
 B = 12
 with torch.no_grad():
     for i, data in enumerate(data_loader_test):
@@ -63,16 +63,6 @@ with torch.no_grad():
 
         print(output[0].shape)
         print(output[1].shape)
-
-        # stack 5 Original Image side by side
-        if i % 2 == 0:
-            torch.cat((Orig_Image_Arr, data.squeeze(0)), dim=-1)
-            # if Orig_Image_Arr is None:
-            #     # Orig_Image_Arr = torch.cat(data.squeeze(0), )
-            #     torch.cat((Orig_Image_Arr, data.squeeze(0)), dim=-1)
-            # # otherwise, Horizontal stack the outputs
-            # else:
-            #     Orig_Image_Arr = np.hstack([Orig_Image_Arr, np.array(data.squeeze(0))])
 
         psnr_AE = PSNR(data, output[1])
         print(psnr_AE)
@@ -88,12 +78,23 @@ with torch.no_grad():
         print(psnr_JPEG2K)
         psnr_Arr[2][i] = psnr_JPEG2K
 
-    # Save the original, CAE Reconstructed, JPEG and JPEG2K Images
+        # stack 5 Original, CAE, JPEG and JPEG2K Images side by side
+        if i % 2 == 0:
+            Orig_Image_Arr = torch.cat((Orig_Image_Arr, data.squeeze(0)), dim=-1)
+            CAE_Image_Arr = torch.cat((CAE_Image_Arr, data.squeeze(0)), dim=-1)
+            JPEG_Image_Arr = torch.cat((JPEG_Image_Arr, data.squeeze(0)), dim=-1)
+            JPEG2K_Image_Arr = torch.cat((JPEG_Image_Arr, data.squeeze(0)), dim=-1)
 
-    # cv2.imwrite(r'./debug_output/Original_Images.bmp', Orig_Image_Arr)
-    Orig_Image_Arr_img = transforms.functional.to_pil_image(np.transpose(Orig_Image_Arr * 255, (1, 2, 0)))
-    Orig_Image_Arr_img.show()
-    Orig_Image_Arr_img.convert('RGB').save('./Test_Results/Original_Images.png')
+    # Save the original, CAE Reconstructed, JPEG and JPEG2K Images
+    Orig_Image_Arr_img = transforms.functional.to_pil_image(Orig_Image_Arr)
+    CAE_Image_Arr_img = transforms.functional.to_pil_image(CAE_Image_Arr)
+    JPEG_Image_Arr_img = transforms.functional.to_pil_image(JPEG_Image_Arr)
+    JPEG2K_Image_Arr_img = transforms.functional.to_pil_image(JPEG2K_Image_Arr)
+    # Orig_Image_Arr_img.show()
+    Orig_Image_Arr_img.save('./Test_Results/Original_Images.png')
+    CAE_Image_Arr_img.save('./Test_Results/CAE_Images.png')
+    JPEG_Image_Arr_img.save('./Test_Results/JPEG_Images.png')
+    JPEG2K_Image_Arr_img.save('./Test_Results/JPEG2000_Images.png')
 
     plt.figure()
     plt.plot(range(len(dataset_test)), psnr_Arr[0][:], range(len(dataset_test)), psnr_Arr[1][:], range(len(dataset_test)
@@ -104,8 +105,9 @@ with torch.no_grad():
     plt.ylabel("PSNR [dB]")
     plt.grid()
     plt.legend(['CAE PSNR', 'JPEG PSNR', 'JPEG2000 PSNR'])
+
+    plt.savefig('./Test_Results/PSNR_over_Test_samples.png')
     plt.show()
-    plt.savefig(r'./Test_Results/PSNR_over_Test_samples')
 
     psnr_AE_AVG = np.mean(psnr_Arr[0])
     psnr_JPEG_AVG = np.mean(psnr_Arr[1])
