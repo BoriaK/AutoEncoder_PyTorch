@@ -93,7 +93,7 @@ with torch.no_grad():
     # cv2.imwrite(r'./debug_output/Original_Images.bmp', Orig_Image_Arr)
     Orig_Image_Arr_img = transforms.functional.to_pil_image(np.transpose(Orig_Image_Arr * 255, (1, 2, 0)))
     Orig_Image_Arr_img.show()
-    Orig_Image_Arr_img.convert('RGB').save('./debug_output/Original_Images.png')
+    Orig_Image_Arr_img.convert('RGB').save('./Test_Results/Original_Images.png')
 
     plt.figure()
     plt.plot(range(len(dataset_test)), psnr_Arr[0][:], range(len(dataset_test)), psnr_Arr[1][:], range(len(dataset_test)
