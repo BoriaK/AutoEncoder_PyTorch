@@ -29,7 +29,7 @@ args.dtype_long = torch.cuda.LongTensor if torch.cuda.is_available() and args.cu
 # move model to the right device
 model = AutoEncoderTest(args.Image_size).to(args.device)
 
-f = args.root_chkps + '/c_1.pth'
+f = args.root_chkps + '/c3_373.pth'
 chkp = torch.load(f)
 model.load_state_dict(chkp['model_state'])
 model.to(args.device)
@@ -81,9 +81,9 @@ with torch.no_grad():
         # stack 5 Original, CAE, JPEG and JPEG2K Images side by side
         if i % 2 == 0:
             Orig_Image_Arr = torch.cat((Orig_Image_Arr, data.squeeze(0)), dim=-1)
-            CAE_Image_Arr = torch.cat((CAE_Image_Arr, data.squeeze(0)), dim=-1)
-            JPEG_Image_Arr = torch.cat((JPEG_Image_Arr, data.squeeze(0)), dim=-1)
-            JPEG2K_Image_Arr = torch.cat((JPEG_Image_Arr, data.squeeze(0)), dim=-1)
+            CAE_Image_Arr = torch.cat((CAE_Image_Arr, output[1].squeeze(0)), dim=-1)
+            JPEG_Image_Arr = torch.cat((JPEG_Image_Arr, data_JPEG.squeeze(0)), dim=-1)
+            JPEG2K_Image_Arr = torch.cat((JPEG2K_Image_Arr, data_JPEG2K.squeeze(0)), dim=-1)
 
     # Save the original, CAE Reconstructed, JPEG and JPEG2K Images
     Orig_Image_Arr_img = transforms.functional.to_pil_image(Orig_Image_Arr)
