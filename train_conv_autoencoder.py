@@ -22,9 +22,11 @@ import glob
 parser = argparse.ArgumentParser()
 parser.add_argument('--resume_epoch', type=int, default=None, help='resume epoch value')
 parser.add_argument('--load_training_phase', type=str, default='c_', help='c_ - regular, c1_ - w. PCA Rotation, c2_ - '
-                                                                          'w. quantization noise, c_3_ - w. RD Loss')
+                                                                          'w. quantization noise, c_3_ - w. RD Loss, '
+                                                                          'f_ - final version')
 parser.add_argument('--save_training_phase', type=str, default=None, help='c_ - regular, c1_ - w. PCA Rotation, c2_ - '
-                                                                          'w. quantization noise, c_3_ - w. RD Loss')
+                                                                          'w. quantization noise, c_3_ - w. RD Loss f_ '
+                                                                          '- final version')
 parser.add_argument('--n_epochs', type=int, default=20, help='number of epochs of training')
 parser.add_argument('--batch_size', type=int, default=128, help='size of the batches')
 parser.add_argument('--Image_size', type=int, default=128, help='size of the input images')
@@ -81,7 +83,7 @@ def trainAutoEncoder():
 
     # construct an optimizer
     optimizer = torch.optim.Adam(
-        model.parameters(), lr=1e-5)
+        model.parameters(), lr=1e-4)
 
     # and a learning rate scheduler - Optional
     # lr_scheduler = torch.optim.lr_scheduler.StepLR(optimizer,

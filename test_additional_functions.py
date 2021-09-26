@@ -3,7 +3,7 @@ from datasets import DataSet1
 import torchvision.transforms as transforms
 import glob
 from add_Functions import PSNR
-from add_Functions import JPEGcompression
+from add_Functions import JPEGCompression
 
 FileFolder = r'./debug_output'
 
@@ -12,7 +12,7 @@ img_in.show()
 img_out = Image.open(r'./debug_output/1.bmp')
 img_out.show()
 
-img_tst = JPEGcompression(img_in, 1)
+img_tst = JPEGCompression(img_in, 1)
 img_tst.show()
 
 f_in = transforms.ToTensor()(img_in).unsqueeze_(0)

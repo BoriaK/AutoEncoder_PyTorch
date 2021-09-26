@@ -17,12 +17,25 @@ def PSNR(original, compressed):
     return psnr
 
 
-def JPEGcompression(img_ten, ce):
+def JPEGCompression(img_ten):
     # takes a Tensor, and returnes a JPEG converted PIL Image, converted to tensor
     # ce = range(0, 10)   #bits per pixel
     image = transforms.functional.to_pil_image(img_ten)
     outputIoStream = io.BytesIO()
-    image.save(outputIoStream, "JPEG", quality=ce, optimice=True)
+    image.save(outputIoStream, "JPEG", quality=75, optimice=True)
     outputIoStream.seek(0)
+    # bpp = Image.open(outputIoStream).bits
     img_ten_jpeg = transforms.ToTensor()(Image.open(outputIoStream)).unsqueeze_(0)
     return img_ten_jpeg
+
+
+def JPEG2000Compression(img_ten, bpp):
+    # takes a Tensor, and returnes a JPEG converted PIL Image, converted to tensor
+    # ce = range(0, 10)   #bits per pixel
+    image = transforms.functional.to_pil_image(img_ten)
+    outputIoStream = io.BytesIO()
+    image.save(outputIoStream, "JPEG2000", quality_mode='rates', quality_layers=[bpp], optimice=True)
+    outputIoStream.seek(0)
+    # bpp = Image.open(outputIoStream).bits
+    img_ten_jpeg2K = transforms.ToTensor()(Image.open(outputIoStream)).unsqueeze_(0)
+    return img_ten_jpeg2K
