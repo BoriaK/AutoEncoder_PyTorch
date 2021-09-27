@@ -1,0 +1,3 @@
+the data is saved as a zip file
+test needs to run on the latest chkpoint from drive, on GPU
+the checkpoint on this PC is just for debug, on CPU

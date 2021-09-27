@@ -16,6 +16,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 parser = argparse.ArgumentParser()
+parser.add_argument('--test_chkps', type=str, default='c_1', help='checkpoint for testing')
 parser.add_argument('--data', type=str, default=r'./dataSet/TestData', help='root directory of the dataset')
 parser.add_argument('--cuda', action='store_true', help='use GPU computation')
 parser.add_argument('--root-chkps', type=str, default='./checkpoints', help='checkpoints directory')
@@ -29,7 +30,7 @@ args.dtype_long = torch.cuda.LongTensor if torch.cuda.is_available() and args.cu
 # move model to the right device
 model = AutoEncoderTest(args.Image_size).to(args.device)
 
-f = args.root_chkps + '/c3_373.pth'
+f = os.path.join(args.root_chkps, args.test_chkps+'.pth')
 chkp = torch.load(f)
 model.load_state_dict(chkp['model_state'])
 model.to(args.device)
